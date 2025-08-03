@@ -1,7 +1,7 @@
 {
-  "name": "numbertostring",
+  "name": "numberconverter",
   "version": "1.0.0",
-  "description": "This web application offers users a simple and modern way to convert a number to a string in two languages (English and Spanish). It also provides a REST API for performing this conversion.",
+  "description": "This web application offers users a simple and modern way to convert a number to any representation, including binary, hexadecimal, and text. It also provides a REST API for performing any of the conversions.",
   "main": "./index.js",
   "type": "module",
   "scripts": {
@@ -9,20 +9,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/livan23l/NumberToString.git"
+    "url": "git+https://github.com/livan23l/NumberConverter"
   },
   "keywords": [
     "Number",
-    "String",
     "NumberToString",
-    "Convertion",
-    "english",
-    "spanish"
+    "NumberToBinary",
+    "NumberToOctal",
+    "NumberToHexadecimal",
+    "Convertion"
   ],
   "author": "Iván Alfredo López Barrera - livan23l",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/livan23l/NumberToString/issues"
+    "url": "https://github.com/livan23l/NumberConverter/issues"
   },
-  "homepage": "https://github.com/livan23l/NumberToString#readme"
+  "homepage": "https://github.com/livan23l/NumberConverter#readme"
 }
