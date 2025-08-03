@@ -27,8 +27,12 @@ a {
     color: inherit;
 }
 
-button, input, select, textarea {
+button, input, select, option, textarea {
   font-family: inherit;
+}
+
+button {
+    cursor: pointer;
 }
 
 @media (prefers-reduced-motion: reduce) {

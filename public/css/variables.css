@@ -3,9 +3,11 @@
     --primary: #CBF3F0;
     --text-primary: #0025A1;
     --secondary: #2EC4B6;
-    --text-secondary: #FCFCFB;
+    --text-secondary: #ECECEC;
     --accent: #FF9F1C;
     --text-accent: #2A1E0B;
+    --max-width: 46rem;
+    --breakpoint: 36rem;
 }
 
 /* Font load */

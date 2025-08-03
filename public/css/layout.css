@@ -1,0 +1,126 @@
+/* Page styles */
+.lpage {
+    min-height: 100vh;
+    background-image:
+        linear-gradient(to right, rgba(165, 165, 165, 0.3) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(165, 165, 165, 0.3) 1px, transparent 1px);
+    background-size: 40px 40px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+}
+
+/* Header styles */
+.lheader {
+    grid-row: 1/2;
+    width: 100%;
+    background-color: var(--secondary);
+    display: flex;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.lheader__content {
+    max-width: var(--max-width);
+    width: 100%;
+    height: 100%;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lheader__principal {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.lheader__img {
+    aspect-ratio: 1;
+    min-width: 0;
+    width: 3rem;
+}
+
+.lheader__title {
+    display: none;
+    font-weight: normal;
+}
+
+.lheader__secondary {
+    padding-block: 0.45rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.lheader__anchor {
+    display: block;
+    font-size: 1.4rem;
+    position: relative;
+}
+
+.lheader__anchor::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+}
+
+.lheader__anchor:hover::before {
+    border-bottom: 2px solid var(--text-secondary);
+}
+
+/* Main styles */
+.lmain {
+    grid-row: 2/3;
+    max-width: var(--max-width);
+    width: 100%;
+    margin-inline: auto;
+    padding: 3rem 0.5rem 5rem;
+}
+
+/* Footer styles */
+.lfooter {
+    grid-row: 3/4;
+    width: 100%;
+    border-top: 2px dashed var(--text-primary);
+    background-color: var(--primary);
+    display: flex;
+    justify-content: center;
+}
+
+.lfooter__content {
+    max-width: var(--max-width);
+    width: 100%;
+    height: 100%;
+    padding: 0.65rem 1rem 0.5rem;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.lfooter__item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lfooter__icon {
+    color: var(--text-primary);
+    width: 2.4rem;
+}
+
+.lfooter__text {
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+
+@media (min-width: 36rem) {
+    .lheader__title {
+        display: block;
+    }
+
+    .lfooter__content {
+        padding: 0.65rem 0 0.5rem;
+    }
+}
