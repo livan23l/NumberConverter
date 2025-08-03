@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 
-export const BASE = dirname(dirname(fileURLToPath(import.meta.url)));
+export const BASE = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 
 export const fmt = {
     '.css': 'text/css; charset=utf-8',

@@ -14,10 +14,17 @@ export class Controller {
 
         fs.readFile(file)
             .then((input) => {
-                // Response with the file
+                // Replace the variables with type {{ variable }}
+                let output = input.toString();
+                for (const [key, value] of Object.entries(variables)) {
+                    const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+                    output = output.replace(regex, value);
+                }
+
+                // Response with the output
                 this._res.statusCode = 200;
                 this._res.setHeader('Content-Type', 'text/html; charset=utf-8');
-                this._res.end(input);
+                this._res.end(output);
             })
             .catch(() => {
                 notFound(this._res);
