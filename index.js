@@ -1,1 +1,1 @@
-import './src/config/routes/web.js';
+import './src/config/routes/routes.js';

@@ -1,6 +1,4 @@
 import { Router } from './Router.js';
-import { indexController } from '../../app/controllers/IndexController.js';
+import { MainController } from '../../app/controllers/MainController.js';
 
-Router.GET('/', [indexController, 'home']);
-
-Router.dispatch();
+Router.GET('/', [MainController, 'home']);
