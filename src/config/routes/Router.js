@@ -36,6 +36,14 @@ export class Router {
         this.#POST[uri.replace(/^\/|\/$/g, '')] = callback;
     }
 
+    /**
+     * Processes and returns a static file (css, txt, js) on the condition that
+     * it is located in the 'public' directory.
+     * 
+     * @param {string} uri - The file URI.
+     * @param {http.ServerResponse} res - The server response.
+     * @returns {void}
+     */
     static #processFile(uri, res) {
         // Check the file extension
         const extension = path.extname(uri);
@@ -59,7 +67,23 @@ export class Router {
             })
     }
 
+    /**
+     * Dispatches the current URI according to the defined routes. It checks
+     * whether the route contains parameters and retrieves them.
+     * 
+     * @returns {void}
+     */
     static dispatch() {
+        /**
+         * This function searchs the current method to execute and get the URI
+         * params if exists. Returns the callback ([Controller, method]) and the
+         * URI params.
+         * 
+         * @param {string} uri - The current URI.
+         * @param {string} method - GET or POST.
+         * @returns {object} - The current action with the callback and the
+         * variables.
+         */
         const getAction = (uri, method) => {
             const action = {
                 callback: null,
@@ -104,6 +128,14 @@ export class Router {
             return action;
         }
 
+        /**
+         * This function process the current request according to the URI and
+         * returns one processes file or execute the corresponding callback.
+         * 
+         * @param {http.IncomingMessage} req - The server request.
+         * @param {http.ServerResponse} res - The server response.
+         * @returns {void}
+         */
         const processRequest = (req, res) => {
             // Check if the URI is a file
             if (path.extname(req.url)) return this.#processFile(req.url, res);
@@ -114,7 +146,7 @@ export class Router {
             // Execute the callback if exists
             if (callback) {
                 const [Controller, method] = callback;
-                const instance = new Controller(res, variables);
+                const instance = new Controller(req, res, variables);
                 return instance[method]();
             }
 

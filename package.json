@@ -1,7 +1,7 @@
 {
   "name": "numberconverter",
   "version": "1.0.0",
-  "description": "This web application offers users a simple and modern way to convert a number to any representation, including binary, hexadecimal, and text. It also provides a REST API for performing any of the conversions.",
+  "description": "This web application offers users a simple and modern way to convert a number to any representation, including binary, hexadecimal, and text. It also provides an API for performing any of the conversions.",
   "main": "./index.js",
   "type": "module",
   "scripts": {
