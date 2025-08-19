@@ -15,7 +15,7 @@ export class Controller {
      * 
      * @param {object} data - The data to be validated
      * @param {object} validations - The object with the validations
-     * @returns {object} - The array with all the errors
+     * @returns {object} - The object with all the errors
      * 
      * The possible validations are:
      * - 'condition:...' -> Sets a condition to validate the field.
