@@ -180,6 +180,138 @@ export class CDecimal extends CBase {
     static _validChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
     /**
+     * Gets the numbers from the decimal part in one conversion from one decimal
+     * number to another base. Returns the new decimal part with up to twenty
+     * digits. If the conversion reaches the maximum number of digits and has
+     * not yet completed, this method appends a '...' to the end.
+     * 
+     * @param {string} decimal - The decimal part to be converted.
+     * @param {number} base - The new base for the decimal part.
+     * @returns {string}
+     */
+    static #getDecimals(decimal, base) {
+        const maxDecimals = 25;
+        let finalVal = '';
+
+        // Generate the new decimal value
+        let isComplete = false;
+        for (let decimals = 0; decimals < maxDecimals; decimals++) {
+            const mult = this._strMultiplication(`0.${decimal}`, base);
+
+            decimal = mult.decimalPart;
+            finalVal += mult.intPart;
+
+            if (Number(decimal) == 0) {
+                isComplete = true;
+                break;
+            }
+        }
+
+        // Check if the number could complete the decimal conversion
+        if (!isComplete) finalVal += '...';
+
+        return finalVal;
+    }
+
+    /**
+     * Gets the numbers from the integer part in one conversion from one decimal
+     * number to another base. Returns the final value reached until the
+     * expected is obtained with the following values for each base:
+     * - Binary: 1.
+     * - Octal: 0.
+     * 
+     * @param {string} number - The decimal number to be converted.
+     * @param {number} base - The new base for the decimal number.
+     * @returns {string}
+     */
+    static #getIntegers(number, base) {
+        // Get the expected coefficient
+        const coefficientsByBase = {
+            2: '1',
+            8: '0'
+        };
+        const expectedCoefficient = coefficientsByBase[base];
+
+        // Generate the integer part until reach the expected coefficient
+        let finalValue = '';
+        while (number != expectedCoefficient) {
+            const division = this._strDivision(number, base);
+            number = division.res;
+            finalValue = division.remainder + finalValue;
+        }
+
+        return finalValue;
+    }
+
+    /**
+     * This method provides the basic structure for generating a conversion from
+     * a decimal number to another base. Here, the digits of the decimal and
+     * integer parts in the new base are returned as a list, and the final value
+     * can also be returned if the number contains the structure '0.XXX...'.
+     * 
+     * @param {string} number - The decimal number to convert into another base.
+     * @param {number} base - The new base for the decimal number.
+     * @returns {object} - The final result with all its the properties.
+     */
+    static #getDigits(number, base) {
+        // Define the result structure
+        const result = {
+            isDecimal: number.includes('.'),
+            isNegative: number.startsWith('-'),
+            finalValue: '',
+            digits: []
+        }
+
+        // Check if the number has a decimal part
+        let decimalPart = '';
+        if (result.isDecimal) [number, decimalPart] = number.split('.');
+
+        // Get the decimals digits if the number has a decimal part
+        if (result.isDecimal) {
+            result.digits.push(`.${this.#getDecimals(decimalPart, base)}`);
+        }
+
+        // Check if the number is basically zero and return the result
+        if (['0', '-0'].includes(number)) {
+            let finalNumber = number + result.digits.join('');
+            if (finalNumber == '-0.0') finalNumber = '0.0';
+            result.finalValue = finalNumber;
+            return result;
+        }
+
+        // Check if it's a negative number
+        if (result.isNegative) number = number.slice(1);
+
+        // Generate the integer part and add it to the digits
+        result.digits.unshift(this.#getIntegers(number, base));
+
+        return result;
+    }
+
+    /**
+     * Makes the conversion from one decimal number to the corresponding number
+     * in octal. The decimal number can be negative and can contain a decimal
+     * part.
+     * 
+     * @static
+     * @param {string} number - The decimal number to convert in octal.
+     * @returns {string} - The number in octal format.
+     */
+    static tooctal(number) {
+        // Get the resulting digits
+        const result = this.#getDigits(number, 8);
+
+        // Check if the final value is setted
+        if (result.finalValue != '') return result.finalValue;
+
+        // Complete the octal number
+        if (result.isNegative) result.digits.unshift('-');
+
+        result.finalValue = result.digits.join('');
+        return result.finalValue;
+    }
+
+    /**
      * Makes the conversion from one decimal number to the corresponding number
      * in binary. The decimal number can be negative and can contain a decimal
      * part.
@@ -189,58 +321,18 @@ export class CDecimal extends CBase {
      * @returns {string} - The number in binary format.
      */
     static tobinary(number) {
-        // Check if the number has a decimal part
-        const isDecimal = number.includes('.');
-        let decimalPart = '';
-        if (isDecimal) [number, decimalPart] = number.split('.');
+        // Get the resulting digits
+        const result = this.#getDigits(number, 2);
 
-        // Get the decimal part
-        let binaryDigits = [];
-        if (isDecimal) {
-            binaryDigits.push('.');
-
-            // Generate 20 decimals maximum
-            const maxDecimals = 20;
-            let isComplete = false;
-            for (let decimals = 0; decimals < maxDecimals; decimals++) {
-                const mult = this._strMultiplication(`0.${decimalPart}`, 2);
-
-                decimalPart = mult.decimalPart;
-                binaryDigits.push(mult.intPart);
-
-                if (Number(decimalPart) == 0) {
-                    isComplete = true;
-                    break;
-                }
-            }
-
-            // Check if the number could complete the decimal conversion
-            if (!isComplete) binaryDigits.push('...');
-        }
-
-        // Check if the number is basically zero
-        if (['0', '-0'].includes(number)) {
-            let finalNumber = number + binaryDigits.join('');
-            if (finalNumber == '-0.0') finalNumber = '0.0';
-            return finalNumber;
-        }
-
-        // Check if it's a negative number
-        const isNegative = number.startsWith('-');
-        if (isNegative) number = number.slice(1);
-
-        // Generate the binary number
-        while (Number(number) > 1) {
-            const division = this._strDivision(number, 2);
-            number = division.res;
-            binaryDigits.unshift(division.remainder);
-        }
+        // Check if the final value is setted
+        if (result.finalValue != '') return result.finalValue;
 
         // Complete the binary number
-        if (isNegative) binaryDigits.unshift(-1);
-        else binaryDigits.unshift(1);
+        if (result.isNegative) result.digits.unshift('-1');
+        else result.digits.unshift('1');
 
-        return binaryDigits.join('');
+        result.finalValue = result.digits.join('');
+        return result.finalValue;
     }
 }
 
