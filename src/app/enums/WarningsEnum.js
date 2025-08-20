@@ -4,7 +4,7 @@ export const WarningsEnum = {
         `format, not number format: '${value}' instead of ${value}.`,
     TOOMANYDECIMALS: () =>
         'The result had too many decimals. These were truncated to only ' +
-        'twenty characters.',
+        'twenty-five characters.',
 
     CHEXADECIMALVAL: value =>
         `\`${value}\` is not a valid hexadecimal number.`,
