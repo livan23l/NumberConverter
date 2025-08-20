@@ -374,6 +374,46 @@ export class COctal extends CBase {
 
 export class CBinary extends CBase {
     static validChars = ['0', '1'];
+
+    static #base2Conversion(number, base, baseChars) {
+        // Get the cycles depending on the current base
+        const cyclesPerBase = {
+            8: 3,
+            16: 4
+        };
+        const cycles = cyclesPerBase[base];
+
+        // Define the variables to generate the new value
+        let value = '';
+        let curValue = 0;
+        let exp = 0;
+
+        // Make the conversion
+        for (const dig of number.split('').reverse()) {
+            // Check if it's the end of the current cycle
+            if (exp >= cycles) {
+                // Add the current value to the final value
+                value = baseChars[curValue] + value;
+                // Reset the cycle variables
+                curValue = 0;
+                exp = 0;
+            }
+
+            // Check if the current value will be added
+            if (dig == '1') curValue += (2 ** exp);
+
+            exp++;
+        }
+
+        // Check if the cycle was not finish to add the remaining
+        if (curValue != 0) value = baseChars[curValue] + value;
+
+        return value;
+    }
+
+    static tooctal(number) {
+        return this.#base2Conversion(number, 8, COctal.validChars);
+    }
 }
 
 export class CBase62 extends CBase {
