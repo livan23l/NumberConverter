@@ -1,5 +1,5 @@
 class CBase {
-    static _validChars = [];
+    static validChars = [];
     static _removeAllWhiteSpaces = true;
     static _canContainMinus = true;
     static _canContainPeriod = true;
@@ -50,7 +50,7 @@ class CBase {
 
     /**
      * Check whether the value is valid or not depending on the following flags:
-     * - `_validChars`: Set the characters that are considered valid.
+     * - `validChars`: Set the characters that are considered valid.
      * - `_canContainMinus`: Set if the value can starts with '-'.
      * - `_canContainPeriod`: Set if the value can contian one '.'.
      * 
@@ -85,7 +85,7 @@ class CBase {
         // Validate the rest of the characters
         for (let i = 0; i < value.length; i++) {
             const character = value[i];
-            if (!this._validChars.includes(character)) return false;
+            if (!this.validChars.includes(character)) return false;
         }
 
         return true;
@@ -118,19 +118,27 @@ class CBase {
                 continue;
             }
 
-            const curVal = Number(value[i]);
+            // Check if it's the integer part and directly add the remainder
+            if (!isDecimal) {
+                result.intPart = remainder.toString();
+                continue;
+            }
 
-            // Multiplicate and add the remainder
+            // Multiplicate the current value and add the remainder
+            const curVal = Number(value[i]);
             const curMult = ((curVal * multiplier) + remainder).toString();
-            const has2Digits = curMult.length == 2;
-            const finalDigit = has2Digits ? curMult[1] : curMult[0];
+
+            // Only add the final digit of the result
+            const hasMoreDigits = curMult.length > 1;
+            const finalDigit = curMult.at(-1);
 
             // Set the new remainder
-            remainder = has2Digits ? Number(curMult[0]) : 0;
+            remainder = (hasMoreDigits)
+                ? Number(curMult.slice(0, curMult.length - 1))
+                : 0;
 
-            // Add the result to the corresponding part
-            if (isDecimal) result.decimalPart = finalDigit + result.decimalPart;
-            else result.intPart = finalDigit + result.intPart;
+            // Add the result to the decimal part
+            result.decimalPart = finalDigit + result.decimalPart;
         }
 
         return result;
@@ -148,7 +156,7 @@ class CBase {
      */
     static _strDivision(dividend, divisor) {
         const division = {
-            res: '',
+            result: '',
             remainder: 0
         };
 
@@ -158,49 +166,58 @@ class CBase {
             const res = Math.floor(dig / divisor);
 
             // Update the current values of the division
-            if (res != '0' || division.res != '') {
-                division.res += res.toString();
+            if (res != '0' || division.result != '') {
+                division.result += res.toString();
             }
             division.remainder = dig % divisor;
         }
 
-        if (division.res == '') division.res = '0';
+        if (division.result == '') division.result = '0';
         return division;
     }
 }
 
 export class CHexadecimal extends CBase {
-    static _validChars = [
+    static validChars = [
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
         'E', 'F'
     ];
 }
 
 export class CDecimal extends CBase {
-    static _validChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    static validChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
     /**
      * Gets the numbers from the decimal part in one conversion from one decimal
-     * number to another base. Returns the new decimal part with up to twenty
-     * digits. If the conversion reaches the maximum number of digits and has
-     * not yet completed, this method appends a '...' to the end.
+     * number to another base depending on the valid characters in the new base.
      * 
+     * Returns the new decimal part with up to 25 digits. If the conversion
+     * reaches the maximum number of digits and has not yet completed, this
+     * method appends a '...' to the end.
+     * 
+     * @static
      * @param {string} decimal - The decimal part to be converted.
      * @param {number} base - The new base for the decimal part.
+     * @param {string[]} baseChars - The valid characters in the new base.
      * @returns {string}
      */
-    static #getDecimals(decimal, base) {
+    static #getDecimals(decimal, base, baseChars) {
         const maxDecimals = 25;
         let finalVal = '';
 
         // Generate the new decimal value
         let isComplete = false;
         for (let decimals = 0; decimals < maxDecimals; decimals++) {
+            // Multiply the current decimal part by the new base value
             const mult = this._strMultiplication(`0.${decimal}`, base);
 
+            // Update the new decimal part with the resulting decimal part
             decimal = mult.decimalPart;
-            finalVal += mult.intPart;
 
+            // Push the corresponding int part to the final value
+            finalVal += baseChars[mult.intPart];
+
+            // Chekc if the conversion has ended
             if (Number(decimal) == 0) {
                 isComplete = true;
                 break;
@@ -215,29 +232,28 @@ export class CDecimal extends CBase {
 
     /**
      * Gets the numbers from the integer part in one conversion from one decimal
-     * number to another base. Returns the final value reached until the
-     * expected is obtained with the following values for each base:
-     * - Binary: 1.
-     * - Octal: 0.
+     * number to another base depending on the valid characters in the new
+     * base. Returns the final value reached until get zero in the divisions.
      * 
+     * @static
      * @param {string} number - The decimal number to be converted.
      * @param {number} base - The new base for the decimal number.
+     * @param {string[]} baseChars - The valid characters in the new base.
      * @returns {string}
      */
-    static #getIntegers(number, base) {
-        // Get the expected coefficient
-        const coefficientsByBase = {
-            2: '1',
-            8: '0'
-        };
-        const expectedCoefficient = coefficientsByBase[base];
-
+    static #getIntegers(number, base, baseChars) {
         // Generate the integer part until reach the expected coefficient
+        const expectedCoefficient = '0';
         let finalValue = '';
         while (number != expectedCoefficient) {
+            // Divide the number into the new base value
             const division = this._strDivision(number, base);
-            number = division.res;
-            finalValue = division.remainder + finalValue;
+
+            // Update the new number with the division result
+            number = division.result;
+
+            // Append the corresponding value to the final value
+            finalValue = baseChars[division.remainder] + finalValue;
         }
 
         return finalValue;
@@ -245,47 +261,63 @@ export class CDecimal extends CBase {
 
     /**
      * This method provides the basic structure for generating a conversion from
-     * a decimal number to another base. Here, the digits of the decimal and
-     * integer parts in the new base are returned as a list, and the final value
-     * can also be returned if the number contains the structure '0.XXX...'.
+     * a decimal number to another base. This method will return the new number
+     * as a string depending on the valid characters of the new base.
      * 
+     * @static
      * @param {string} number - The decimal number to convert into another base.
      * @param {number} base - The new base for the decimal number.
-     * @returns {object} - The final result with all its the properties.
+     * @param {string[]} baseChars - The valid characters in the new base.
+     * @returns {string} - The new value in the specified base.
      */
-    static #getDigits(number, base) {
-        // Define the result structure
-        const result = {
-            isDecimal: number.includes('.'),
-            isNegative: number.startsWith('-'),
-            finalValue: '',
-            digits: []
+    static #makeConversion(number, base, baseChars) {
+        // Define the number characteristics
+        const isNegative = number.startsWith('-');
+        const isDecimal = number.includes('.');
+
+        const result = [];  // The result with the integer and decimal parts.
+
+        // Divide the integer and decimal parts from the number
+        let [intPart, decimalPart] = number.split('.');
+
+        // Add the new decimal digits to the final result
+        if (isDecimal) {
+            result.push('.');
+            result.push(this.#getDecimals(decimalPart, base, baseChars));
         }
 
-        // Check if the number has a decimal part
-        let decimalPart = '';
-        if (result.isDecimal) [number, decimalPart] = number.split('.');
+        // Check if the integer part is basically zero to return the result
+        if (intPart == '0' || intPart == '-0') {
+            const finalNumber = intPart + result.join('');
 
-        // Get the decimals digits if the number has a decimal part
-        if (result.isDecimal) {
-            result.digits.push(`.${this.#getDecimals(decimalPart, base)}`);
+            // Return the final number with one correction for '-0.0'
+            if (finalNumber == '-0.0') return '0.0';
+            else return finalNumber;
         }
 
-        // Check if the number is basically zero and return the result
-        if (['0', '-0'].includes(number)) {
-            let finalNumber = number + result.digits.join('');
-            if (finalNumber == '-0.0') finalNumber = '0.0';
-            result.finalValue = finalNumber;
-            return result;
-        }
+        // Remove the '-' from the integer part if it's a negative number
+        if (isNegative) intPart = intPart.slice(1);
 
-        // Check if it's a negative number
-        if (result.isNegative) number = number.slice(1);
+        // Generate the integer part and add it to the result
+        result.unshift(this.#getIntegers(intPart, base, baseChars));
 
-        // Generate the integer part and add it to the digits
-        result.digits.unshift(this.#getIntegers(number, base));
+        // Add the negative sign if it's negative
+        if (isNegative) result.unshift('-');
 
-        return result;
+        return result.join('');
+    }
+
+    /**
+     * Makes the conversion from one decimal number to the corresponding number
+     * in hexadecimal. The decimal number can be negative and can contain a
+     * decimal part.
+     * 
+     * @static
+     * @param {string} number - The decimal number to convert in hexadecimal.
+     * @returns {string} - The number in hexadecimal format.
+     */
+    static tohexadecimal(number) {
+        return this.#makeConversion(number, 16, CHexadecimal.validChars)
     }
 
     /**
@@ -298,17 +330,7 @@ export class CDecimal extends CBase {
      * @returns {string} - The number in octal format.
      */
     static tooctal(number) {
-        // Get the resulting digits
-        const result = this.#getDigits(number, 8);
-
-        // Check if the final value is setted
-        if (result.finalValue != '') return result.finalValue;
-
-        // Complete the octal number
-        if (result.isNegative) result.digits.unshift('-');
-
-        result.finalValue = result.digits.join('');
-        return result.finalValue;
+        return this.#makeConversion(number, 8, COctal.validChars)
     }
 
     /**
@@ -321,31 +343,20 @@ export class CDecimal extends CBase {
      * @returns {string} - The number in binary format.
      */
     static tobinary(number) {
-        // Get the resulting digits
-        const result = this.#getDigits(number, 2);
-
-        // Check if the final value is setted
-        if (result.finalValue != '') return result.finalValue;
-
-        // Complete the binary number
-        if (result.isNegative) result.digits.unshift('-1');
-        else result.digits.unshift('1');
-
-        result.finalValue = result.digits.join('');
-        return result.finalValue;
+        return this.#makeConversion(number, 2, CBinary.validChars)
     }
 }
 
 export class COctal extends CBase {
-    static _validChars = ['0', '1', '2', '3', '4', '5', '6', '7'];
+    static validChars = ['0', '1', '2', '3', '4', '5', '6', '7'];
 }
 
 export class CBinary extends CBase {
-    static _validChars = ['0', '1'];
+    static validChars = ['0', '1'];
 }
 
 export class CBase62 extends CBase {
-    static _validChars = [
+    static validChars = [
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
         'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
         'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
@@ -355,7 +366,7 @@ export class CBase62 extends CBase {
 }
 
 export class CText extends CBase {
-    static _validChars = [
+    static validChars = [
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
         'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Á', 'É',
         'Í', 'Ó', 'Ú', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
