@@ -288,10 +288,13 @@ export class CDecimal extends CBase {
 
         // Check if the integer part is basically zero to return the result
         if (intPart == '0' || intPart == '-0') {
-            const finalNumber = intPart + result.join('');
+            // Set the corresponding zero in the final value
+            const cur0 = baseChars[0];
+            const joinedNumber = cur0 + result.join('');
+            const finalNumber = ((isNegative) ? '-' : '') + joinedNumber;
 
             // Return the final number with one correction for '-0.0'
-            if (finalNumber == '-0.0') return '0.0';
+            if (finalNumber == `-${cur0}.${cur0}`) return `${cur0}.${cur0}`;
             else return finalNumber;
         }
 
@@ -305,6 +308,24 @@ export class CDecimal extends CBase {
         if (isNegative) result.unshift('-');
 
         return result.join('');
+    }
+
+    /**
+     * Makes the conversion from one decimal number to the corresponding number
+     * in base62. The decimal number can be negative and can contain a decimal
+     * part. In this method it's possible to send one custom order in the valid
+     * characters.
+     * 
+     * @static
+     * @param {string} number - The decimal number to convert in base62.
+     * @param {string[]} customChars - A custom character order. 
+     * @returns {string} - The number in base62 format.
+     */
+    static tobase62(number, customChars) {
+        const validChars = (customChars.length > 0)
+            ? customChars
+            : CBase62.validChars;
+        return this.#makeConversion(number, 62, validChars)
     }
 
     /**
@@ -362,6 +383,15 @@ export class CBase62 extends CBase {
         'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
         'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
         'u', 'v', 'w', 'x', 'y', 'z'
+    ];
+    static validNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    static validUppers = [
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+        'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+    ];
+    static validLowers = [
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+        'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
     ];
 }
 

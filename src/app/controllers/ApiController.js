@@ -30,7 +30,35 @@ export class ApiController extends Controller {
      */
     #makeConversion(from, to) {
         const currentClass = this.#getClassByType(from.type);
-        return currentClass[`to${to.type}`](from.value);
+
+        switch(to.type) {
+            case 'base62': {
+                // Check if 'to.format.order' is defined
+                const order = to.format?.order;
+                const newValidChars = [];
+
+                // Create the new valid chars in the sended order
+                const orderList = order ? order.split('-') : [];
+                for (const ord of orderList) {
+                    switch(ord) {
+                        case 'int':
+                            newValidChars.push(...CBase62.validNumbers);
+                            break;
+                        case 'upper':
+                            newValidChars.push(...CBase62.validUppers);
+                            break;
+                        case 'lower':
+                            newValidChars.push(...CBase62.validLowers);
+                            break;
+                    }
+                }
+
+                return currentClass.tobase62(from.value, newValidChars);
+            }
+            default: {
+                return currentClass[`to${to.type}`](from.value);
+            }
+        }
     }
 
     /**
