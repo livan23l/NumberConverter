@@ -29,12 +29,15 @@ class Tester {
                     // Get the current res
                     const res = data.data;
     
-                    // Show the corresponding message
-                    const message = (res == expected)
-                        ? 'Test: [OK]'
-                        : `Test: [Error] - Expected '${expected}' and received ` +
-                        `'${res}' in the input '${input}'.`;
-                    resolve(message);
+                    // Show the corresponding response
+                    const response = (res == expected)
+                        ? { status: 'OK' }
+                        : {
+                            status: 'Error',
+                            error: `Expected '${expected}' and received ` +
+                                   `'${res}' in the input '${input}'.`
+                        };
+                    resolve(response);
                 }).catch(err => {
                     reject(new Error(err.message));
                 });
@@ -49,27 +52,31 @@ class Tester {
         console.log(`------------------------${title}------------------------`);
 
         // Run the tests
+        let okTests = 0;
         for (const test of tests) {
             try {
-                const message = await this.#executeTest(test);
-                console.log(message);
+                const response = await this.#executeTest(test);
+                if (response.status == 'OK') okTests++;
+                else console.log(`Test [Error]: ${response.error}`);
             } catch(err) {
                 console.log(err.message);
             }
         }
+        if (okTests > 0) console.log(`Test [OK]: ${okTests} tests passed`);
     }
 
-    static async runAllTests() {
+    static async runAllDecimalsTests() {
         try {
-            await this.#executeTests(testsBin, 'binary', 'Binary Tests');
-            console.log('\n\n\n');
-            await this.#executeTests(testsOct, 'octal', 'Octal Tests');
-            console.log('\n\n\n');
-            await this.#executeTests(testsHex, 'hexadecimal', 'Hexadecimal Tests');
+            console.log('                        DECIMALS TESTS');
+            await this.#executeTests(testsBin, 'binary', 'To Binary');
+            await this.#executeTests(testsOct, 'octal', 'To Octal');
+            await this.#executeTests(testsHex, 'hexadecimal', 'To Hexadecimal');
         } catch(err) {
             console.log(err.message);
         }
     }
 }
 
-Tester.runAllTests();
+console.clear();
+// Tester.runAllDecimalsTests();
+// Tester.runAllBinaryTests();
