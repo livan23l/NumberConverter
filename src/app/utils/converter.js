@@ -490,6 +490,12 @@ export class CBinary extends CBase {
         return this.#getBase2Template(number, base, baseChars);
     }
 
+    static #getNormalDecimals(number, base, baseChars) {}
+
+    static #getNormalIntegers(number, base, baseChars) {
+
+    }
+
     /**
      * Makes the conversion from one binary number to the corresponding number
      * in hexadecimal. The binary number can be negative and can contain a
