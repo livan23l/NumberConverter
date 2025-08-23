@@ -1,13 +1,15 @@
-import { tests as testsHex } from "./decimals/decimals_to_hexadecimal.test.js";
-import { tests as testsOct } from "./decimals/decimals_to_octal.test.js";
-import { tests as testsBin } from "./decimals/decimals_to_binary.test.js";
+// Decimals tests
+import { tests as decTestsHex } from "./decimals/decimals_to_hexadecimal.test.js";
+import { tests as decTestsOct } from "./decimals/decimals_to_octal.test.js";
+import { tests as decTestsBin } from "./decimals/decimals_to_binary.test.js";
+
+// Binary Tests
+import { tests as binTestsOct } from "./binary/binary_to_octal.test.js";
 
 class Tester {
     static #url = 'http://localhost:3300/api/converter';
     static #body = {
-        "from": {
-            "type": "decimal"
-        },
+        "from": {},
         "to": {}
     };
 
@@ -67,16 +69,32 @@ class Tester {
 
     static async runAllDecimalsTests() {
         try {
+            this.#body.from.type = 'decimal';
             console.log('                        DECIMALS TESTS');
-            await this.#executeTests(testsBin, 'binary', 'To Binary');
-            await this.#executeTests(testsOct, 'octal', 'To Octal');
-            await this.#executeTests(testsHex, 'hexadecimal', 'To Hexadecimal');
+            await this.#executeTests(decTestsBin, 'binary', 'To Binary');
+            await this.#executeTests(decTestsOct, 'octal', 'To Octal');
+            await this.#executeTests(decTestsHex, 'hexadecimal', 'To Hexadecimal');
         } catch(err) {
             console.log(err.message);
         }
     }
+
+    static async runAllBinaryTests() {
+        try {
+            this.#body.from.type = 'binary';
+            console.log('                        BINARY TESTS');
+            await this.#executeTests(binTestsOct, 'octal', 'To Octal');
+        } catch(err) {
+            console.log(err.message);
+        }
+    }
+
+    static async runAllTests() {
+        await this.runAllDecimalsTests();
+        console.log('\n');
+        await this.runAllBinaryTests();
+    }
 }
 
 console.clear();
-// Tester.runAllDecimalsTests();
-// Tester.runAllBinaryTests();
+Tester.runAllTests();
