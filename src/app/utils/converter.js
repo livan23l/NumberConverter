@@ -454,6 +454,9 @@ export class CBinary extends CBase {
         // Check if the cycle was not finish to add the remaining
         if (value != 0) addToResult(value);
 
+        // Set '0' if the result is empty
+        if (result == '') result = '0';
+
         return result;
     }
 
