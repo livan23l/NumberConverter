@@ -5,6 +5,7 @@ import { tests as decTestsBin } from "./decimals/decimals_to_binary.test.js";
 
 // Binary Tests
 import { tests as binTestsOct } from "./binary/binary_to_octal.test.js";
+import { tests as binTestsHex } from "./binary/binary_to_hexadecimal.test.js";
 
 class Tester {
     static #url = 'http://localhost:3300/api/converter';
@@ -84,6 +85,7 @@ class Tester {
             this.#body.from.type = 'binary';
             console.log('                        BINARY TESTS');
             await this.#executeTests(binTestsOct, 'octal', 'To Octal');
+            await this.#executeTests(binTestsHex, 'hexadecimal', 'To Hexadecimal');
         } catch(err) {
             console.log(err.message);
         }
