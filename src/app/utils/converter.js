@@ -92,15 +92,58 @@ class CBase {
     }
 
     /**
-     * Performs a multiplication between a number in string format and an
-     * integer. The number in string format is expected to have the structure
-     * '0.XXX...'.
+     * Performs a sum between two integers numbers in string format. This method
+     * uses numbers of any size, which is why they must be in string format.
      * 
      * @static
-     * @param {string} value - The number in string format with the structure
-     * '0.XXX...'.
+     * @param {string} number1 - The first number in string format.
+     * @param {string} number2 - The second number in string format.
+     * @returns {string} - The sum of both numbers.
+     */
+    static strIntAddition(number1, number2) {
+        // Get the maximum and minimum number according on their dimensions
+        const [maxN, minN] = (number1.length > number2.length)
+            ? [number1, number2]
+            : [number2, number1];
+
+        // Invert both numbers
+        const maxNRev = maxN.split('').reverse();
+        const minNRev = minN.split('').reverse();
+
+        let result = '';
+
+        // Make the addition
+        let remainder = 0;
+        for (let i = 0; i < maxN.length; i++) {
+            const num1 = Number(maxNRev[i]);
+            const num2 = Number(minNRev[i] ?? 0);
+
+            // Make the current addition and set the remainder
+            const curRes = (remainder + num1 + num2).toString();
+            const has2digits = (curRes.length == 2);
+            remainder = (has2digits) ? Number(curRes[0]) : 0;
+
+            // Add the last digit to the final result
+            result = curRes.at(-1) + result;
+        };
+
+        // Add the remainder
+        if (remainder != 0) result = remainder.toString() + result;
+
+        // Return the addition
+        return result;
+    }
+
+    /**
+     * Performs a multiplication between a value in string format and an
+     * integer. The value can contain a decimal part. This method will return
+     * an object with the integer part and the decimal part.
+     * 
+     * @static
+     * @param {string} value - The integer number in string format.
      * @param {number} multiplier - The int number to multiply the value.
-     * @returns {object} - The result with an int part and a decimal part.
+     * @returns {object} - The multiplication result with the integer and
+     * decimal parts.
      */
     static _strMultiplication(value, multiplier) {
         const result = {
@@ -109,7 +152,7 @@ class CBase {
         };
 
         // Make the multiplication from back to from
-        let isDecimal = true;
+        let isDecimal = value.includes('.');
         let remainder = 0;
         for (let i = value.length - 1; i >= 0; i--) {
             // Check if the current digit is the period
@@ -118,39 +161,45 @@ class CBase {
                 continue;
             }
 
-            // Check if it's the integer part and directly add the remainder
-            if (!isDecimal) {
-                result.intPart = remainder.toString();
-                continue;
-            }
+            // Get the curreng digit
+            const dig = Number(value[i]);
 
-            // Multiplicate the current value and add the remainder
-            const curVal = Number(value[i]);
-            const curMult = ((curVal * multiplier) + remainder).toString();
+            // Make the current multiplication
+            const mult = ((dig * multiplier) + remainder).toString();
 
-            // Only add the final digit of the result
-            const hasMoreDigits = curMult.length > 1;
-            const finalDigit = curMult.at(-1);
+            // Check if the multiplication result has more than one digit
+            const hasMoreDigits = (mult.length > 1);
 
             // Set the new remainder
             remainder = (hasMoreDigits)
-                ? Number(curMult.slice(0, curMult.length - 1))
+                ? Number(mult.slice(0, mult.length - 1))
                 : 0;
 
-            // Add the result to the decimal part
-            result.decimalPart = finalDigit + result.decimalPart;
+            // Get the last digit
+            const lastDig = mult.at(-1).toString();
+
+            // Add the last digit to the corresponding part
+            if (isDecimal) result.decimalPart = lastDig + result.decimalPart;
+            else result.intPart = lastDig + result.intPart;
         }
+
+        // Add the remainder
+        if (remainder > 0) {
+            result.intPart = remainder.toString() + result.intPart;
+        }
+
+        // Check if the decimal part is empty
+        if (result.decimalPart == '') result.decimalPart = '0';
 
         return result;
     }
 
     /**
-     * Performs a division between a number in string format and an integer. The
-     * number in string format must not have a decimal part.
+     * Performs a division between an integer (no decimal part) dividend in
+     * string format and an integer.
      * 
      * @static
-     * @param {string} dividend - The number with no decimal part in string
-     * format.
+     * @param {string} dividend - The integer number in string format to divide.
      * @param {number} divisor - The int number that will divide the dividend.
      * @returns {object} - The division with the result and the remainder.
      */
@@ -490,9 +539,19 @@ export class CBinary extends CBase {
         return this.#getBase2Template(number, base, baseChars);
     }
 
-    static #getNormalDecimals(number, base, baseChars) {}
+    static #getBase10Decimals(number, base, baseChars) {
+        let result = '';
 
-    static #getNormalIntegers(number, base, baseChars) {
+        // Make the conversion from back to from
+        const currentValue = '1';
+        for (const dig of number.split('').revere()) {
+            
+        }
+
+        return result;
+    }
+
+    static #getBase10Integers(number, base, baseChars) {
 
     }
 
