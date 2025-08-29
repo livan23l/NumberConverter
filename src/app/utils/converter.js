@@ -100,7 +100,7 @@ class CBase {
      * @param {string} number2 - The second number in string format.
      * @returns {string} - The sum of both numbers.
      */
-    static strIntAddition(number1, number2) {
+    static _strIntAddition(number1, number2) {
         // Get the maximum and minimum number according on their dimensions
         const [maxN, minN] = (number1.length > number2.length)
             ? [number1, number2]
@@ -195,34 +195,120 @@ class CBase {
     }
 
     /**
-     * Performs a division between an integer (no decimal part) dividend in
-     * string format and an integer.
+     * This method is a template to perform one division at a time for the
+     * methods `_strIntDivision` and `strFullDivision`. This returns an object
+     * with the result and the remainder.
+     * 
+     * @private
+     * @param {number} divisor - The divisor number.
+     * @param {number} lastRemainder - The remainder of the previous divisions.
+     * @param {number} currentValue - The current value of the current division.
+     * @returns {{result: string, remainder: number}} The division result and
+     * the remainder.
+     */
+    static __divisionTemplate(divisor, lastRemainder, currentValue) {
+        const division = {
+            result: '',
+            remainder: 0,
+        };
+
+        // Make the mathematical evaluations
+        const value = (lastRemainder * 10) + currentValue;
+        division.result = Math.floor(value / divisor).toString();
+        division.remainder = value % divisor;
+
+        return division;
+    }
+
+    /**
+     * Performs a division between an integer dividend (no decimal part) in
+     * string format and an integer divisor. This method will return the integer
+     * division result and the remainder as an object.
      * 
      * @static
      * @param {string} dividend - The integer number in string format to divide.
      * @param {number} divisor - The int number that will divide the dividend.
      * @returns {object} - The division with the result and the remainder.
-     */
-    static _strDivision(dividend, divisor) {
+    */
+    static _strIntDivision(dividend, divisor) {
         const division = {
             result: '',
             remainder: 0
         };
 
         for (const d of dividend) {
-            // Make the mathematical evaluations
-            const dig = (division.remainder * 10) + Number(d);
-            const res = Math.floor(dig / divisor);
+            const { result, remainder } = this.__divisionTemplate(
+                divisor,
+                division.remainder,
+                Number(d)
+            );
 
             // Update the current values of the division
-            if (res != '0' || division.result != '') {
-                division.result += res.toString();
+            if (result != '0' || division.result != '') {
+                division.result += result;
             }
-            division.remainder = dig % divisor;
+            division.remainder = remainder;
         }
 
         if (division.result == '') division.result = '0';
         return division;
+    }
+
+    /**
+     * Performs full division between a string (which may contain a decimal) and
+     * an integer. Returns the final division result in string format. If the
+     * division enters a loop (such as when dividing 1/3), it will perform a
+     * maximum of 25 iterations.
+     * 
+     * @static
+     * @param {string} dividend - The dividend number in string format.
+     * @param {number} divisor - The integer number to divide the dividend.
+     * @returns {string} - The division result.
+     */
+    static _strFullDivision(dividend, divisor) {
+        let result = '';
+
+        // Make the division for all the digits in the dividend
+        let isDecimalPart = false;
+        let remainder = 0;
+        for (const dig of dividend) {
+            // Check if the current digit is the '.'
+            if (dig == '.') {
+                isDecimalPart = true;
+                result += '.';
+                continue;
+            }
+
+            // Make the current division
+            const div = this.__divisionTemplate(divisor, remainder, Number(dig));
+
+            // Update the result and the remainder
+            if (div.result != '0' || result != '') result += div.result;
+            remainder = div.remainder;
+        }
+
+        // Add the final remainder
+        if (remainder != 0) {
+            const maxDecimals = 25;
+
+            // Check if the result has the decimal part to add '.' to the result
+            if (!isDecimalPart) result += '.';
+
+            for (let i = 0; i < maxDecimals; i++) {
+                const div = this.__divisionTemplate(divisor, remainder, 0);
+
+                result += div.result;
+                remainder = div.remainder;
+
+                if (remainder == 0) break;
+            }
+        }
+
+        // Fix the result if is empty or starts with '.'
+        if (result == '') result = '0';
+        else if (result.startsWith('.')) result = '0' + result;
+
+        return result;
     }
 
     /**
@@ -351,7 +437,7 @@ export class CDecimal extends CBase {
         let finalValue = '';
         while (number != expectedCoefficient) {
             // Divide the number into the new base value
-            const division = this._strDivision(number, base);
+            const division = this._strIntDivision(number, base);
 
             // Update the new number with the division result
             number = division.result;
@@ -539,20 +625,82 @@ export class CBinary extends CBase {
         return this.#getBase2Template(number, base, baseChars);
     }
 
-    static #getBase10Decimals(number, base, baseChars) {
-        let result = '';
+    /**
+     * Generates the decimal part of one binary number that will be converted
+     * into a decimal number.
+     * 
+     * @param {string} number - The decimal part of a binary number.
+     * @returns {string} - The decimal part in decimal base.
+     */
+    static #getBase10Decimals(number) {
+        let result = '0';
 
         // Make the conversion from back to from
-        const currentValue = '1';
-        for (const dig of number.split('').revere()) {
-            
+        let currentValue = '0.5';
+        for (const dig of number) {
+            // Add the current value to the result if the digit is '1'
+            if (dig == '1') {
+                // Get the decimal part of the current value
+                const decimalPart = currentValue.split('.').at(-1);
+
+                // Fill the current value with zeros
+                let resultWithZeros = result;
+                for (let i = result.length; i < decimalPart.length; i++) {
+                    resultWithZeros += '0';
+                }
+
+                // Add the sum to the result
+                result = this._strIntAddition(resultWithZeros, decimalPart);
+            }
+
+            // Generate the next value
+            currentValue = this._strFullDivision(currentValue, 2);
         }
 
         return result;
     }
 
-    static #getBase10Integers(number, base, baseChars) {
+    /**
+     * Generates the integer part of one binary number that will be converted
+     * into a decimal number.
+     * 
+     * @param {string} number - The integer part of a binary number.
+     * @returns {string} - The integer part in decimal base.
+     */
+    static #getBase10Integers(number) {
+        let result = '0';
 
+        // Make the conversion from back to from
+        let currentValue = '1';
+        for (const dig of number.split('').reverse()) {
+            // Add the current value to the result if the digit is '1'
+            if (dig == '1') {
+                result = this._strIntAddition(currentValue, result);
+            }
+            
+            // Generate the next value
+            const nextValue = this._strMultiplication(currentValue, 2);
+            currentValue = nextValue.intPart;
+        }
+
+        return result;
+    }
+
+    /**
+     * Makes the conversion from one binary number to the corresponding number
+     * in base62. The binary number can be negative and can contain a decimal
+     * part. In this method it's possible to send one custom order in the valid
+     * characters. This method will make two conversions, one from binary to
+     * decimal and the second one from decimal to base62.
+     * 
+     * @static
+     * @param {string} number - The binary number to convert in base62.
+     * @param {string[]} customChars - A custom character order. 
+     * @returns {string} - The number in base62 format.
+     */
+    static tobase62(number, customChars) {
+        const decimalNumber = this.todecimal(number);
+        return CDecimal.tobase62(decimalNumber, customChars);
     }
 
     /**
@@ -572,6 +720,25 @@ export class CBinary extends CBase {
             this.#getBase2Decimals,
             this.#getBase2Integers
         );
+    }
+
+    /**
+     * Makes the conversion from one binary number to the corresponding number
+     * in decimal. The binary number can be negative and can contain a decimal
+     * part.
+     * 
+     * @static
+     * @param {string} number - The binary number to convert in decimal.
+     * @returns {string} - The number in decimal format.
+     */
+    static todecimal(number) {
+        return this._conversion(
+            number,
+            10,
+            CDecimal.validChars,
+            this.#getBase10Decimals,
+            this.#getBase10Integers
+        )
     }
 
     /**
