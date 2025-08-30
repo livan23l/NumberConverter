@@ -24,8 +24,8 @@ export class ApiController extends Controller {
     /**
      * Make the conversion of `from.value` in `from.type` to `to.type`.
      * 
-     * @param {Object} from - The `from` object with the value and the type.
-     * @param {Object} to - The `to` object with the type and formats.
+     * @param {object} from - The `from` object with the value and the type.
+     * @param {object} to - The `to` object with the type and formats.
      * @returns {string} - The converted value.
      */
     #makeConversion(from, to) {
@@ -62,11 +62,26 @@ export class ApiController extends Controller {
     }
 
     /**
+     * This method will add all possible final warnings so that these can later
+     * be added to the final response.
+     * 
+     * @param {object} result - The final result of the conversion-
+     * @param {object} warnings - The warnings object to add the new keys.
+     */
+    #addFinalWarnings(result, warnings) {
+        // Check if the data has '...' and add a warning
+        if (result.data.endsWith('...')) {
+            warnings['data'] = WarningsEnum.TOOMANYDECIMALS();
+            result.data = result.data.replace(/\.\.\.$/, '');
+        }
+    }
+
+    /**
      * Validate and standardize `from.value` depending on `from.type` and return
      * the final value with warnings if there are some.
      * 
-     * @param {Object} from - The from object with the type and the value.
-     * @returns {Object} - The resulting value and warnings if any.
+     * @param {object} from - The from object with the type and the value.
+     * @returns {object} - The resulting value and warnings if any.
      */
     #validateFrom(from) {
         // Get the current class depending on the type
@@ -89,12 +104,13 @@ export class ApiController extends Controller {
     }
 
     /**
-     * Handles the conversion by performing validations and returning the
-     * expected result
+     * Makes the general validations of the data. This method will return an
+     * object with all the founded errors.
      * 
-     * @param {Object} data - The request data
+     * @param {object} data - The request data.
+     * @returns {object} - An object with all the founded errors.
      */
-    #handleConversion(data) {
+    #validateData(data) {
         // Validate the data
         const errors = this._validate(data, {
             'from':            'required|obj',
@@ -116,12 +132,27 @@ export class ApiController extends Controller {
                                     'str|in:["commas", "periods"]'
         });
 
+        // Return the errors
+        return errors;
+    }
+
+    /**
+     * Handles the conversion by performing validations and returning the
+     * expected result.
+     * 
+     * @param {object} data - The request data.
+     * @returns {object} - The final response.
+     */
+    #handleConversion(data) {
+        // Validate the data
+        const dataErrors = this.#validateData(data);
+
         // Check if there is at least one error
-        if (Object.keys(errors).length > 0) {
-            return this._object({ errors });
+        if (Object.keys(dataErrors).length > 0) {
+            return this._object({ errors: dataErrors });
         }
 
-        // Put the warnings
+        // Add the warnings
         const warnings = {};
         if (typeof data.from.value == 'number') {
             data.from.value = data.from.value.toString();
@@ -147,13 +178,9 @@ export class ApiController extends Controller {
         else if (data.from.type != data.to.type) {
             result.data = this.#makeConversion(data.from, data.to);
 
-            // Check if the data has '...' and add a warning
-            if (result.data.endsWith('...')) {
-                warnings['data'] = WarningsEnum.TOOMANYDECIMALS();
-                result.data = result.data.replace(/\.\.\.$/, '');
-            }
+            // Add all the possible final warnings
+            this.#addFinalWarnings(result, warnings);
         }
-
 
         // Define the response
         const response = (Object.keys(warnings).length > 0)
